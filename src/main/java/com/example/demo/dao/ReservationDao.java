@@ -9,9 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.List;
 
 @Slf4j
@@ -34,8 +32,8 @@ public class ReservationDao {
     public List<GetResponseReservationWeek> getListOfDay(GetRequestReservationWeek getRequestReservationWeek) {
         log.info("Reservation.getListOfAvailableDay");
 
-        String sql = "SELECT day_id FROM `Reservation_day` ORDER BY day LIMIT ?,7";
-        int startDay = getRequestReservationWeek.getWeek()/7 + 1;
+        String sql = "SELECT `day_id`, `day` FROM reservation_day ORDER BY `day` ASC LIMIT ?,7";
+        int startDay = (getRequestReservationWeek.getWeek() -1 ) * 7;
         return this.jdbcTemplate.query(sql,
                 new RowMapper<GetResponseReservationWeek>() {
                     public GetResponseReservationWeek mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -57,9 +55,11 @@ public class ReservationDao {
     public int[] getListOfTime(long day_id, int reservation_people) {
         log.info("Reservation.getListOfAvailableDay");
 
-        String sql = "SELECT time FROM `Time` WHERE day_id=? AND people_num <= ?";
+        String sql = "SELECT time FROM time WHERE day_id=? AND people_num>=?";
         List<Timestamp> timestampList = this.jdbcTemplate.queryForList(sql, Timestamp.class, day_id, reservation_people);
-
+        /*for(Timestamp a : timestampList){
+            log.info("logis" + a.toString());
+        }*/
         // Stream을 사용하여 List<Timestamp>를 List<Integer>으로 변환
         List<Integer> hours = timestampList.stream()
                 .map(timestamp -> {
